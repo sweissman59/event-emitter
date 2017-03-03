@@ -1,0 +1,23 @@
+{
+  "name": "swh-event-emitter",
+  "version": "0.0.1",
+  "description": "Basic JavaScript event emitter",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sweissman59/event-emitter.git"
+  },
+  "author": "Sam Weissman-Hohler <s.weissman59+npm@gmail.com> (http://samwh.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sweissman59/event-emitter/issues"
+  },
+  "homepage": "https://github.com/sweissman59/event-emitter#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0"
+  }
+}
