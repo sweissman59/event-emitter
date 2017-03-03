@@ -20,8 +20,16 @@ EventEmitter.prototype.hasEvent = function(event) {
 	return this.supportedEvents.indexOf(event) > -1;
 }
 
-EventEmitter.prototype.registerHandler = function(event, handler) {
+EventEmitter.prototype.checkSafety = function(event) {
 	if (this.eventSafe && !this.hasEvent(event)) {
+		return false;
+	}
+
+	return true;
+}
+
+EventEmitter.prototype.registerHandler = function(event, handler) {
+	if (!this.checkSafety(event)) {
 		console.warn('This emitter is event safe and does not support the event name: ' + event + '.');
 		return null;
 	} else if (typeof handler !== 'function') {
@@ -39,6 +47,23 @@ EventEmitter.prototype.registerHandler = function(event, handler) {
 	this.handlers.event.push(handler);
 
 	return new HandlerBundle(event, handler, this);
+}
+
+EventEmitter.prototype.emitEvent = function(event, ...rest) {
+	if (!this.checkSafety(event)) {
+		console.warn('This emitter is event safe and does not support the event name: ' + event + '.');
+		return false;
+	}
+
+	let eventHandlers = this.handlers.event;
+
+	if (eventHandlers) {
+		for (let i = 0; i < eventHandlers.length; i++) {
+			eventHandlers[i].apply(this, rest);
+		}
+	}
+
+	return true;
 }
 
 module.exports = EventEmitter;

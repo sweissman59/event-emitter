@@ -70,3 +70,32 @@ describe('#RegisterHandler', function() {
 		expect(result.emitter).to.eql(emitter);
 	});
 });
+
+describe('#EmitEvent', function() {
+	it('should not emit an event if it is event safe and does not have the event', function() {
+		let emitter = new EventEmitter([], true);
+		expect(emitter.emitEvent('test')).to.be.false;
+	});
+
+	it('should emit an event if it is not event safe', function() {
+		let emitter = new EventEmitter([], false);
+		expect(emitter.emitEvent('test')).to.be.true;
+	});
+
+	it('should emit an event if it has the event', function() {
+		let emitter = new EventEmitter(['test'], true);
+		expect(emitter.emitEvent('test')).to.be.true;
+	});
+
+	it('should call an event handler if it is registered', function() {
+		let emitter = new EventEmitter(['test'], true);
+		var called = 0;
+
+		emitter.registerHandler('test', function(){
+			called++;
+		});
+		emitter.emitEvent('test');
+
+		expect(called).to.equal(1);
+	});
+});
