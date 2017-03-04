@@ -65,9 +65,9 @@ describe('#RegisterHandler', function() {
 		let event = 'foo';
 		let handler = function(){};
 		let result = emitter.registerHandler(event, handler);
-		expect(result.event).to.eql(event);
-		expect(result.handler).to.eql(handler);
-		expect(result.emitter).to.eql(emitter);
+		expect(result.event).to.equal(event);
+		expect(result.handler).to.equal(handler);
+		expect(result.emitter).to.equal(emitter);
 	});
 });
 
@@ -175,3 +175,87 @@ describe('#EmitEvent', function() {
 		expect(called).to.equal(2);
 	});
 });
+
+describe('#EventArguments', function() {
+	it('should pass all emitEvent arguments to handlers', function() {
+		let emitter = new EventEmitter();
+		let event = 'foo';
+		let args = [];
+		let handler = function(...rest){
+			args = rest;
+		};
+
+		emitter.registerHandler(event, handler);
+
+		emitter.emitEvent(event, 1, 2, 3, 'foo');
+		expect(args).to.eql([1, 2, 3, 'foo']);
+
+		emitter.emitEvent(event, 'foo', 'bar');
+		expect(args).to.eql(['foo', 'bar']);
+
+		emitter.emitEvent(event);
+		expect(args).to.eql([]);
+	});
+
+	it('should pass same arguments to seperate handlers', function() {
+		let emitter = new EventEmitter();
+		let event = 'foo';
+		let val1 = 0;
+		let val2 = 0;
+		let handler1 = function(val){
+			val1 = val + 1;
+		};
+
+		let handler2 = function(val){
+			val2 = val - 1;
+		};
+
+		emitter.registerHandler(event, handler1);
+		emitter.registerHandler(event, handler2)
+
+		emitter.emitEvent(event, 1);
+		expect(val1).to.eql(val2 + 2);
+	});
+
+	it('should pass arguments to one time handlers properly', function() {
+		let emitter = new EventEmitter();
+		let event = 'foo';
+		let args1 = [];
+		let args2 = [];
+		let handler1 = function(...rest){
+			args1 = rest;
+		};
+		let handler2 = function(...rest){
+			args2 = rest;
+		};
+
+		emitter.registerHandler(event, handler1);
+		emitter.registerOneTimeHandler(event, handler2);
+
+		emitter.emitEvent(event, 1, 2, 3, 'foo');
+		expect(args1).to.eql(args2);
+
+		emitter.emitEvent(event, 'foo', 'bar');
+		expect(args1).to.not.eql(args2);
+		expect(args1).to.eql(['foo', 'bar']);
+		expect(args2).to.eql([1, 2, 3, 'foo']);
+	});
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

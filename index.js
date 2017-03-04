@@ -64,8 +64,8 @@ EventEmitter.prototype.registerOneTimeHandler = function(event, handler) {
 	}
 
 	let self = this;
-	let handlerWrapper = function() {
-		handler();
+	let handlerWrapper = function(...rest) {
+		handler(...rest);
 		self.removeHandler(event, handlerWrapper);
 	}
 
