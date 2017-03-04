@@ -15,7 +15,7 @@ describe('#Constructor', function() {
 	});
 
 	it('should not be event safe if constructed with eventSafe null', function () {
-		let emitter = new EventEmitter([]);
+		let emitter = new EventEmitter();
 		expect(emitter.eventSafe).to.equal.false;
 	});
 
@@ -55,13 +55,21 @@ describe('#RegisterHandler', function() {
 	});
 
 	it('should not register a handler if the handler is not a function', function() {
-		let emitter = new EventEmitter([]);
+		let emitter = new EventEmitter();
 		let result = emitter.registerHandler('foo', 'bar');
 		expect(result).to.equal(null);
 	});
 
+	it('should not register the same handler for the same event', function () {
+		let emitter = new EventEmitter();
+		let event = 'foo';
+		let handler = function(){};
+		emitter.registerHandler(event, handler);
+		expect(emitter.registerHandler(event, handler)).to.equal(null);
+	});
+
 	it('should return a HandlerBundle containing the event, handler, and emitter', function() {
-		let emitter = new EventEmitter([]);
+		let emitter = new EventEmitter();
 		let event = 'foo';
 		let handler = function(){};
 		let result = emitter.registerHandler(event, handler);
@@ -72,9 +80,15 @@ describe('#RegisterHandler', function() {
 });
 
 describe('#RegisterOneTimeHandler', function() {
-	it('should not register a handler if the handler is not a function', function() {
+	it('should not register a one time handler if the handler is not a function', function() {
 		let emitter = new EventEmitter([]);
 		let result = emitter.registerOneTimeHandler('foo', 'bar');
+		expect(result).to.equal(null);
+	});
+
+	it('should not register a one time handler if the emitter is event safe and does not have the event', function() {
+		let emitter = new EventEmitter([], true);
+		let result = emitter.registerOneTimeHandler('foo', function(){});
 		expect(result).to.equal(null);
 	});
 
@@ -82,7 +96,7 @@ describe('#RegisterOneTimeHandler', function() {
 		let emitter = new EventEmitter([]);
 		let called = 0;
 		let event = 'foo';
-		let handler = function(){
+		let handler = function() {
 			called++;
 		};
 
@@ -96,12 +110,12 @@ describe('#RegisterOneTimeHandler', function() {
 
 describe('#RemoveHandler', function() {
 	it('should return false if a handler is removed that was not registered', function() {
-		let emitter = new EventEmitter([]);
+		let emitter = new EventEmitter();
 		expect(emitter.removeHandler('test', function(){})).to.be.false;
 	});
 
 	it('should return true and no longer call the handler if removed', function() {
-		let emitter = new EventEmitter([]);
+		let emitter = new EventEmitter();
 		let called = 0;
 		let event = 'foo';
 		let handler = function(){
@@ -116,6 +130,45 @@ describe('#RemoveHandler', function() {
 		emitter.emitEvent(event);
 		expect(called).to.equal(1);
 	});
+});
+
+describe('#RemoveAllEventHandlers', function() {
+	it('should remove all handlers for the given event without affecting other event handlers', function() {
+		let emitter = new EventEmitter();
+		let called1 = 0;
+		let called2 = 0;
+		let event1 = 'foo';
+		let event2 = 'bar';
+		let handler1a = function(val) {
+			called1 += val;
+		}
+		let handler1b = function(val) {
+			called1 += val;
+		}
+		let handler2 = function(val) {
+			called2 += val;
+		}
+
+		emitter.registerHandler(event1, handler1a);
+		emitter.registerHandler(event1, handler1b);
+		emitter.registerHandler(event2, handler2);
+		emitter.emitEvent(event1, 1);
+		emitter.emitEvent(event2, 2);
+
+		expect(called1).to.equal(2);
+		expect(called2).to.equal(called1);
+
+		emitter.removeAllEventHandlers(event1);
+		emitter.emitEvent(event1, 1);
+		emitter.emitEvent(event2, 2);
+
+		expect(called1).to.equal(2);
+		expect(called2).to.equal(4);
+	});
+});
+
+describe('#RemoveAllHandlers', function() {
+
 });
 
 describe('#EmitEvent', function() {
@@ -197,7 +250,7 @@ describe('#EventArguments', function() {
 		expect(args).to.eql([]);
 	});
 
-	it('should pass same arguments to seperate handlers', function() {
+	it('should pass same arguments to seperate handlers for same event', function() {
 		let emitter = new EventEmitter();
 		let event = 'foo';
 		let val1 = 0;
@@ -211,10 +264,37 @@ describe('#EventArguments', function() {
 		};
 
 		emitter.registerHandler(event, handler1);
-		emitter.registerHandler(event, handler2)
+		emitter.registerHandler(event, handler2);
 
 		emitter.emitEvent(event, 1);
 		expect(val1).to.eql(val2 + 2);
+	});
+
+	it('should pass different arguments to appropriate handlers for different events', function() {
+		let emitter = new EventEmitter();
+		let event1 = 'foo';
+		let event2 = 'bar';
+		let args1 = [];
+		let args2 = [];
+		let handler1 = function(...rest){
+			args1 = rest;
+		};
+		let handler2 = function(...rest){
+			args2 = rest;
+		};
+
+		emitter.registerHandler(event1, handler1);
+		emitter.registerHandler(event2, handler2);
+
+		emitter.emitEvent(event1, 'test', 1);
+
+		expect(args1).to.eql(['test', 1]);
+		expect(args2).to.eql([]);
+
+		emitter.emitEvent(event2, 'blah', 2);
+
+		expect(args1).to.eql(['test', 1]);
+		expect(args2).to.eql(['blah', 2]);
 	});
 
 	it('should pass arguments to one time handlers properly', function() {

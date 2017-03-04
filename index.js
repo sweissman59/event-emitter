@@ -45,14 +45,14 @@ EventEmitter.prototype.registerHandler = function(event, handler) {
 		return null;
 	}
 
-	if (!this.handlers.event) {
-		this.handlers.event = [];
-	} else if (this.handlers.event.indexOf(handler) > -1) {
+	if (!this.handlers[event]) {
+		this.handlers[event] = [];
+	} else if (this.handlers[event].indexOf(handler) > -1) {
 		console.warn('This handler is already registered for this event.');
 		return null;
 	}
 
-	this.handlers.event.push(handler);
+	this.handlers[event].push(handler);
 
 	return new HandlerBundle(event, handler, this);
 }
@@ -77,7 +77,7 @@ EventEmitter.prototype.registerOneTimeHandler = function(event, handler) {
 }
 
 EventEmitter.prototype.removeHandler = function(event, handler) {
-	let eventHandlers = this.handlers.event;
+	let eventHandlers = this.handlers[event];
 
 	if (eventHandlers) {
 		let idx = eventHandlers.indexOf(handler);
@@ -91,13 +91,21 @@ EventEmitter.prototype.removeHandler = function(event, handler) {
 	return false;
 }
 
+EventEmitter.prototype.removeAllEventHandlers = function(event) {
+	delete this.handlers[event];
+}
+
+EventEmitter.prototype.removeAllHandlers = function() {
+	this.handlers = {};
+}
+
 EventEmitter.prototype.emitEvent = function(event, ...rest) {
 	if (!this.checkSafety(event)) {
 		console.warn('This emitter is event safe and does not support the event name: ' + event + '.');
 		return false;
 	}
 
-	let eventHandlers = this.handlers.event;
+	let eventHandlers = this.handlers[event];
 
 	if (eventHandlers) {
 		for (let i = 0; i < eventHandlers.length; i++) {
