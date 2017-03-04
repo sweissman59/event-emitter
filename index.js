@@ -28,11 +28,19 @@ EventEmitter.prototype.checkSafety = function(event) {
 	return true;
 }
 
+function checkFunction(func) {
+	if (typeof func !== 'function') {
+		return false;
+	}
+
+	return true;
+}
+
 EventEmitter.prototype.registerHandler = function(event, handler) {
 	if (!this.checkSafety(event)) {
 		console.warn('This emitter is event safe and does not support the event name: ' + event + '.');
 		return null;
-	} else if (typeof handler !== 'function') {
+	} else if (!checkFunction(handler)) {
 		console.warn('The handler must be a function.');
 		return null;
 	}
@@ -47,6 +55,40 @@ EventEmitter.prototype.registerHandler = function(event, handler) {
 	this.handlers.event.push(handler);
 
 	return new HandlerBundle(event, handler, this);
+}
+
+EventEmitter.prototype.registerOneTimeHandler = function(event, handler) {
+	if (!checkFunction(handler)) {
+		console.warn('The handler must be a function.');
+		return null;
+	}
+
+	let self = this;
+	let handlerWrapper = function() {
+		handler();
+		self.removeHandler(event, handlerWrapper);
+	}
+
+	let handlerBundle = this.registerHandler(event, handlerWrapper);
+
+	if (handlerBundle === null) return null;
+
+	return handlerBundle;
+}
+
+EventEmitter.prototype.removeHandler = function(event, handler) {
+	let eventHandlers = this.handlers.event;
+
+	if (eventHandlers) {
+		let idx = eventHandlers.indexOf(handler);
+
+		if (idx > -1) {
+			eventHandlers.splice(idx, 1);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 EventEmitter.prototype.emitEvent = function(event, ...rest) {

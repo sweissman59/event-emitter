@@ -71,6 +71,53 @@ describe('#RegisterHandler', function() {
 	});
 });
 
+describe('#RegisterOneTimeHandler', function() {
+	it('should not register a handler if the handler is not a function', function() {
+		let emitter = new EventEmitter([]);
+		let result = emitter.registerOneTimeHandler('foo', 'bar');
+		expect(result).to.equal(null);
+	});
+
+	it('should call the handler once and only once when the event is emitted', function() {
+		let emitter = new EventEmitter([]);
+		let called = 0;
+		let event = 'foo';
+		let handler = function(){
+			called++;
+		};
+
+		emitter.registerOneTimeHandler(event, handler);
+		emitter.emitEvent(event);
+		emitter.emitEvent(event);
+
+		expect(called).to.equal(1);
+	});
+});
+
+describe('#RemoveHandler', function() {
+	it('should return false if a handler is removed that was not registered', function() {
+		let emitter = new EventEmitter([]);
+		expect(emitter.removeHandler('test', function(){})).to.be.false;
+	});
+
+	it('should return true and no longer call the handler if removed', function() {
+		let emitter = new EventEmitter([]);
+		let called = 0;
+		let event = 'foo';
+		let handler = function(){
+			called++;
+		};
+
+		emitter.registerHandler(event, handler);
+		emitter.emitEvent(event);
+		expect(called).to.equal(1);
+
+		expect(emitter.removeHandler(event, handler)).to.be.true;
+		emitter.emitEvent(event);
+		expect(called).to.equal(1);
+	});
+});
+
 describe('#EmitEvent', function() {
 	it('should not emit an event if it is event safe and does not have the event', function() {
 		let emitter = new EventEmitter([], true);
@@ -97,5 +144,34 @@ describe('#EmitEvent', function() {
 		emitter.emitEvent('test');
 
 		expect(called).to.equal(1);
+	});
+
+	it('should call an event handler as many times as the event is emitted', function() {
+		let emitter = new EventEmitter(['test'], true);
+		var called = 0;
+
+		emitter.registerHandler('test', function(){
+			called++;
+		});
+		emitter.emitEvent('test');
+		emitter.emitEvent('test');
+
+		expect(called).to.equal(2);
+	});
+
+	it('should call multiple event handlers if they are registered', function() {
+		let emitter = new EventEmitter(['test'], true);
+		var called = 0;
+
+		emitter.registerHandler('test', function(){
+			called++;
+		});
+		emitter.registerHandler('test', function(){
+			called++;
+		});
+
+		emitter.emitEvent('test');
+
+		expect(called).to.equal(2);
 	});
 });
