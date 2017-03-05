@@ -325,14 +325,14 @@ describe('#EventArguments', function() {
 		emitter.registerHandler(event1, handler1);
 		emitter.registerHandler(event2, handler2);
 
-		emitter.emitEvent(event1, 'test', 1);
+		emitter.emitEvent(event1, 'test', {a:1,b:2,c:'testing',d:[1,2,3]});
 
-		expect(args1).to.eql(['test', 1]);
+		expect(args1).to.eql(['test', {a:1,b:2,c:'testing',d:[1,2,3]}]);
 		expect(args2).to.eql([]);
 
 		emitter.emitEvent(event2, 'blah', 2);
 
-		expect(args1).to.eql(['test', 1]);
+		expect(args1).to.eql(['test', {a:1,b:2,c:'testing',d:[1,2,3]}]);
 		expect(args2).to.eql(['blah', 2]);
 	});
 
@@ -351,13 +351,13 @@ describe('#EventArguments', function() {
 		emitter.registerHandler(event, handler1);
 		emitter.registerOneTimeHandler(event, handler2);
 
-		emitter.emitEvent(event, 1, 2, 3, 'foo');
+		emitter.emitEvent(event, 1, 2, 3, {a:1,b:2,c:'testing',d:[1,2,3]});
 		expect(args1).to.eql(args2);
 
-		emitter.emitEvent(event, 'foo', 'bar');
+		emitter.emitEvent(event, {a:1,b:2,c:'testing',d:[1,2,3]}, 'bar');
 		expect(args1).to.not.eql(args2);
-		expect(args1).to.eql(['foo', 'bar']);
-		expect(args2).to.eql([1, 2, 3, 'foo']);
+		expect(args1).to.eql([{a:1,b:2,c:'testing',d:[1,2,3]}, 'bar']);
+		expect(args2).to.eql([1, 2, 3, {a:1,b:2,c:'testing',d:[1,2,3]}]);
 	});
 });
 
@@ -396,7 +396,7 @@ describe('#HandlerBundle', function() {
 		expect(args).to.eql([]);
 	});
 
-	it('remove return false if the handler has already been removed', function() {
+	it('should return false if the handler has already been removed', function() {
 		let emitter = new EventEmitter();
 		let called = 0;
 		let event = 'foo';
@@ -413,18 +413,61 @@ describe('#HandlerBundle', function() {
 	});
 });
 
+describe('#VariableEventNames', function() {
+	it('should allow variable event names if it is event safe and has the event', function() {
+		let emitter = new EventEmitter(['foo', 'bar'], true);
+		let result;
+		let handler1 = function(val) {
+			emitter.registerHandler(val, handler2);
+			result = val;
+		}
+		let handler2 = function(val) {
+			result = val;
+		}
 
+		emitter.registerHandler('foo', handler1);
+		emitter.emitEvent('foo', 'bar');
+		expect(result).to.equal('bar');
 
+		emitter.emitEvent('bar', {a:1,b:2,c:'testing',d:[1,2,3]});
+		expect(result).to.eql({a:1,b:2,c:'testing',d:[1,2,3]});
+	});
 
+	it('should not allow variable event names if it is event safe and does not have the event', function() {
+		let emitter = new EventEmitter(['foo', 'bar'], true);
+		let result;
+		let handler1 = function(val) {
+			expect(emitter.registerHandler(val, handler2)).to.be.null;
+			result = val;
+		}
+		let handler2 = function(val) {
+			result = val;
+		}
 
+		emitter.registerHandler('foo', handler1);
+		emitter.emitEvent('foo', 'test');
+		expect(result).to.equal('test');
+	});
+});
 
+describe('#RemovingHandlersWithinHandlers', function() {
+	it('should remove a handler before it is called for the same event', function() {
+		let emitter = new EventEmitter();
+		let handler1Called = false;
+		let handler2Called = false;
+		let handlerBundle;
 
+		emitter.registerHandler('foo', function() {
+			handlerBundle.remove();
+			handler1Called = true;
+		});
 
+		handlerBundle = emitter.registerHandler('foo', function() {
+			handler2Called = true;
+		});
 
-
-
-
-
-
-
-
+		emitter.emitEvent('foo');
+		expect(handler1Called).to.be.true;
+		expect(handler2Called).to.be.false;
+	});
+});
