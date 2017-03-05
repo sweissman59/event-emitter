@@ -110,15 +110,13 @@ EventEmitter.prototype.registerOneTimeHandler = function(event, handler) {
 	}
 
 	let self = this;
-	let handlerWrapper = function(...rest) {
-		handler(...rest);
-		self.removeHandler(event, handlerWrapper);
-	}
 
-	let handlerBundle = this.registerHandler(event, handlerWrapper);
+	let handlerBundle = this.registerHandler(event, function(...rest){
+		handlerBundle.remove();
+		handler(...rest);
+	});
 
 	if (handlerBundle === null) return null;
-
 	return handlerBundle;
 }
 
@@ -176,6 +174,7 @@ EventEmitter.prototype.emitEvent = function(event, ...rest) {
 	let eventHandlers = this.handlers[event];
 
 	if (eventHandlers) {
+		eventHandlers = eventHandlers.slice();
 		for (let i = 0; i < eventHandlers.length; i++) {
 			eventHandlers[i].apply(this, rest);
 		}

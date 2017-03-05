@@ -106,6 +106,29 @@ describe('#RegisterOneTimeHandler', function() {
 
 		expect(called).to.equal(1);
 	});
+
+	it('should allow for multiple one time handlers on the same event', function() {
+		let emitter = new EventEmitter();
+		let handler1Called = false;
+		let handler2Called = false;
+		let event = 'foo';
+		let handler1 = function() {
+			handler1Called = true;
+		}
+		let handler2 = function() {
+			handler2Called = true;
+		}
+
+		let handlerBundle1 = emitter.registerOneTimeHandler(event, handler1);
+		let handlerBundle2 = emitter.registerOneTimeHandler(event, handler2);
+
+		expect(handlerBundle1).to.not.eql(handlerBundle2);
+
+		emitter.emitEvent(event);
+
+		expect(handler1Called).to.be.true;
+		expect(handler2Called).to.be.true;
+	});
 });
 
 describe('#RemoveHandler', function() {
@@ -451,23 +474,27 @@ describe('#VariableEventNames', function() {
 });
 
 describe('#RemovingHandlersWithinHandlers', function() {
-	it('should remove a handler before it is called for the same event', function() {
+	it('should not remove a handler before it is called for the same event emission', function() {
 		let emitter = new EventEmitter();
-		let handler1Called = false;
-		let handler2Called = false;
+		let handler1Called = 0;
+		let handler2Called = 0;
 		let handlerBundle;
 
 		emitter.registerHandler('foo', function() {
 			handlerBundle.remove();
-			handler1Called = true;
+			handler1Called++;
 		});
 
 		handlerBundle = emitter.registerHandler('foo', function() {
-			handler2Called = true;
+			handler2Called++;
 		});
 
 		emitter.emitEvent('foo');
-		expect(handler1Called).to.be.true;
-		expect(handler2Called).to.be.false;
+		expect(handler1Called).to.equal(1);
+		expect(handler2Called).to.equal(1);
+
+		emitter.emitEvent('foo');
+		expect(handler1Called).to.equal(2);
+		expect(handler2Called).to.equal(1);
 	});
 });
