@@ -133,6 +133,11 @@ describe('#RemoveHandler', function() {
 });
 
 describe('#RemoveAllEventHandlers', function() {
+	it('should not break if told to remove all event handlers when there are none', function() {
+		let emitter = new EventEmitter(['test']);
+		emitter.removeAllEventHandlers('foo');
+	});
+
 	it('should remove all handlers for the given event without affecting other event handlers', function() {
 		let emitter = new EventEmitter();
 		let called1 = 0;
@@ -168,7 +173,41 @@ describe('#RemoveAllEventHandlers', function() {
 });
 
 describe('#RemoveAllHandlers', function() {
+	it('should not break if told to remove all handlers when there are none', function() {
+		let emitter = new EventEmitter(['test']);
+		emitter.removeAllHandlers();
+	});
 
+	it('should remove all handlers for all events', function() {
+		let emitter = new EventEmitter();
+		let called1 = 0;
+		let called2 = 0;
+		let event1 = 'foo';
+		let event2 = 'bar';
+		let handler1 = function(val) {
+			called1 += val;
+		}
+		let handler2 = function(val) {
+			called2 += val;
+		}
+
+		emitter.registerHandler(event1, handler1);
+		emitter.registerHandler(event2, handler2);
+
+		emitter.emitEvent(event1, 1);
+		emitter.emitEvent(event2, 2);
+
+		expect(called1).to.equal(1);
+		expect(called2).to.equal(2);
+
+		emitter.removeAllHandlers();
+
+		emitter.emitEvent(event1, 1);
+		emitter.emitEvent(event2, 2);
+
+		expect(called1).to.equal(1);
+		expect(called2).to.equal(2);
+	});
 });
 
 describe('#EmitEvent', function() {
@@ -322,7 +361,57 @@ describe('#EventArguments', function() {
 	});
 });
 
+describe('#HandlerBundle', function() {
+	it('should remove the associated handler for the associated event from the associated emitter, and return true if successful', function() {
+		let emitter = new EventEmitter();
+		let event = 'foo';
+		let args = [];
+		let handler = function(...rest) {
+			args = rest;
+		}
 
+		let handlerBundle = emitter.registerHandler(event, handler);
+		emitter.emitEvent(event, 'test', 1);
+		expect(args).to.eql(['test', 1]);
+
+		expect(handlerBundle.remove()).to.be.true;
+
+		emitter.emitEvent(event, 'blah', 2);
+		expect(args).to.eql(['test', 1]);
+	});
+
+	it('should should work for a one time handler as well', function() {
+		let emitter = new EventEmitter();
+		let event = 'foo';
+		let args = [];
+		let handler = function(...rest) {
+			args = rest;
+		}
+
+		let handlerBundle = emitter.registerOneTimeHandler(event, handler);
+
+		handlerBundle.remove();
+
+		emitter.emitEvent(event, 'blah', 2);
+		expect(args).to.eql([]);
+	});
+
+	it('remove return false if the handler has already been removed', function() {
+		let emitter = new EventEmitter();
+		let called = 0;
+		let event = 'foo';
+		let handler = function(){
+			called++;
+		};
+
+		let handlerBundle = emitter.registerHandler(event, handler);
+		emitter.emitEvent(event);
+		expect(called).to.equal(1);
+
+		expect(emitter.removeHandler(event, handler)).to.be.true;
+		expect(handlerBundle.remove()).to.be.false;
+	});
+});
 
 
 
