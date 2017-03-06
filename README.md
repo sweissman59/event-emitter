@@ -3,6 +3,7 @@ A simple event emitter package which allows for registering handlers for
 events, registering one time handlers, emitting events, and removing handlers.
 
 # Installation
+Requires Node 6.4.0 or newer.
 ```
 npm install swh-event-emitter
 ```
