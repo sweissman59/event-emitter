@@ -61,4 +61,5 @@ Clone this repository, then from the directory run
 ```
 npm test
 ```
-Test results will print to the console, with additional code coverage available in the `coverage` directory.
+Test results will print to the console, with additional code coverage information
+available in the `coverage` directory.
