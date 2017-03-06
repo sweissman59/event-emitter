@@ -4,7 +4,7 @@
   "description": "Basic JavaScript event emitter",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --reporter spec && istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec"
+    "test": "istanbul cover ./node_modules/mocha/bin/_mocha -- -R spec"
   },
   "repository": {
     "type": "git",
