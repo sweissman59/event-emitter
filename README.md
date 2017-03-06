@@ -34,6 +34,7 @@ var handler = function(...rest) {
 var handlerBundle = emitter.registerHandler('event1', handler);
 emitter.emitEvent('event1', 1, 'foo', {bar: 1}, ['blah', 'hooray']);
 
+// Remove handler using the same event name and handler reference.
 emitter.removeHandler('event1', handler);
 
 // The HandlerBundle object returned when registering a handler allows for easy removal
@@ -54,3 +55,10 @@ emitter.removeAllEventHandlers('event1');
 // Remove all handlers for all events.
 emitter.removeAllHandlers();
 ```
+
+#Tests
+Clone this repository, then from the directory run
+```
+npm test
+```
+Test results will print to the console, with additional code coverage available in the `coverage` directory.
