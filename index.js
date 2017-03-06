@@ -174,6 +174,7 @@ EventEmitter.prototype.emitEvent = function(event, ...rest) {
 	let eventHandlers = this.handlers[event];
 
 	if (eventHandlers) {
+		//making a copy here prevents bugs from handlers getting removed by other handlers during the same event
 		eventHandlers = eventHandlers.slice();
 		for (let i = 0; i < eventHandlers.length; i++) {
 			eventHandlers[i].apply(this, rest);
